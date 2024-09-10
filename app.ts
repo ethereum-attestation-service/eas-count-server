@@ -19,6 +19,7 @@ app.get(
     // Check if the result is in cache
     const cachedResult = getGlobalCache<{ count: number }>(cacheKey);
     if (cachedResult) {
+      console.log("Cache hit for", cacheKey);
       return res.json(cachedResult);
     }
 
