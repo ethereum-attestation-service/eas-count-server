@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import axios from "axios";
 import { EAS_CHAIN_CONFIGS } from "./chains";
 import { ethers } from "ethers";
+import { setGlobalCache, getGlobalCache } from "./cache";
 
 const app = express();
 const port = 3008;
@@ -11,6 +12,15 @@ app.get(
   "/countAttestations/:chainId/:address",
   async (req: Request, res: Response) => {
     const { chainId, address } = req.params;
+
+    // Create a unique cache key for this request
+    const cacheKey = `attestations_${chainId}_${address.toLowerCase()}`;
+
+    // Check if the result is in cache
+    const cachedResult = getGlobalCache<{ count: number }>(cacheKey);
+    if (cachedResult) {
+      return res.json(cachedResult);
+    }
 
     // Find the matching chain config
     const chainConfig = EAS_CHAIN_CONFIGS.find((chain) => chain.id === chainId);
@@ -49,7 +59,12 @@ app.get(
       );
 
       const count = response.data.data.aggregateAttestation._count._all;
-      res.json({ count });
+      const result = { count };
+
+      // Cache the result for 1 minute (60000 milliseconds)
+      setGlobalCache(cacheKey, result, 60000);
+
+      res.json(result);
     } catch (error) {
       console.error("Error fetching attestation count:", error);
       res.status(500).json({ error: "Failed to fetch attestation count" });
