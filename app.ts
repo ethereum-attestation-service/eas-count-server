@@ -4,7 +4,7 @@ import { EAS_CHAIN_CONFIGS } from "./chains";
 import { ethers } from "ethers";
 
 const app = express();
-const port = 3000;
+const port = 3008;
 
 // Route for /countAttestations/{chainId}/{address}
 app.get(
