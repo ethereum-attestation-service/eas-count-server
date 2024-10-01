@@ -57,8 +57,8 @@ async function getAttestationCount(
     const count = response.data.data.aggregateAttestation._count._all;
     const result = { count };
 
-    // Cache the result for 1 minute (60000 milliseconds)
-    setGlobalCache(cacheKey, result, 60000);
+    // Cache the result for 1 hour (3600000 milliseconds)
+    setGlobalCache(cacheKey, result, 3600 * 1000);
 
     return count;
   } catch (error) {
@@ -70,11 +70,25 @@ async function getAttestationCount(
   }
 }
 
+// Helper function to validate Ethereum address
+function isValidEthereumAddress(address: string): boolean {
+  try {
+    ethers.getAddress(address);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 // Update /countAttestations endpoint
 app.get(
   "/countAttestations/:chainId/:address",
   async (req: Request, res: Response) => {
     const { chainId, address } = req.params;
+
+    if (!isValidEthereumAddress(address)) {
+      return res.status(400).json({ error: "Invalid Ethereum address" });
+    }
 
     try {
       const count = await getAttestationCount(chainId, address);
@@ -99,7 +113,11 @@ app.get(
       return res.status(400).json({ error: "Address is required" });
     }
 
-    const formattedAddress = ethers.getAddress(address.toString());
+    if (!isValidEthereumAddress(address)) {
+      return res.status(400).json({ error: "Invalid Ethereum address" });
+    }
+
+    const formattedAddress = ethers.getAddress(address);
 
     const counts = await Promise.all(
       EAS_CHAIN_CONFIGS.map(async (chain) => {
