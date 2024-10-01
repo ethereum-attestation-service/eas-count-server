@@ -1,11 +1,15 @@
 import express, { Request, Response } from "express";
 import axios from "axios";
+import cors from "cors";
 import { EAS_CHAIN_CONFIGS } from "./chains";
 import { ethers } from "ethers";
 import { setGlobalCache, getGlobalCache } from "./cache";
 
 const app = express();
 const port = 3008;
+
+// Enable CORS for all routes
+app.use(cors());
 
 // Helper function to get attestation count
 async function getAttestationCount(
